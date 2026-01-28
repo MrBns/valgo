@@ -3,7 +3,8 @@ package v
 // Schema is the interface that wraps the Validate method.
 // Validate returns a list of SchemaValidationError if validation fails.
 type Schema interface {
-	Validate() []SchemaValidationError
+	ValidateAll() []*SchemaValidationError
+	Validate() *SchemaValidationError
 }
 
 // SchemaValidationError represents a validation error with a key and an error message.
@@ -37,8 +38,8 @@ type ActionOptions interface {
 	Run(v any) error
 }
 
-// ErrMsg is the interface for custom error messages.
-type ErrMsg interface {
+// ErrMsgInterface is the interface for custom error messages.
+type ErrMsgInterface interface {
 	ActionOptions
-	Msg(v ...any) string
+	Msg(v any) string
 }

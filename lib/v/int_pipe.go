@@ -1,26 +1,26 @@
 package v
 
-// IntPipeManager manages the validation pipeline for int64 values.
+// IntPipeManager manages the validation pipeline for int values.
 type IntPipeManager struct {
 	actions []IntPipeAction
-	value   int64
+	value   int
 	key     string
 	error   error
 }
 
-// IntPipeAction defines the interface for int64 validation actions.
-// Each action can run validation logic on an int64 value and return an error if validation fails.
+// IntPipeAction defines the interface for int validation actions.
+// Each action can run validation logic on an int value and return an error if validation fails.
 type IntPipeAction interface {
-	Run(v int64) error
+	Run(v int) error
 }
 
-// NewNumberPipe creates a new validation pipe for int64 values.
+// NewNumberPipe creates a new validation pipe for int values.
 // The pipe executes the provided actions in sequence during validation.
 //
 // Example:
 //
 //	pipe := NewNumberPipe(42, Min(0), Max(100))
-func NewNumberPipe(value int64, actions ...IntPipeAction) Pipe {
+func NewNumberPipe(value int, actions ...IntPipeAction) Pipe {
 	return &IntPipeManager{
 		value:   value,
 		actions: actions,

@@ -56,6 +56,7 @@ func (pipe *stringPipeManager) Validate() *SchemaValidationError {
 				Err: err,
 			}
 		}
+
 	}
 
 	return nil
