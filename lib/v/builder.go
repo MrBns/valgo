@@ -9,32 +9,31 @@ import (
 // PipeRegistry where all pipes will be compiled and saved.
 // it will be the final object
 type PipeRegistry struct {
-	pipes []Pipe
+	pipes []PipeFace
 }
 
-// NewPipesBuilder creates a new [Schema] with the given pipes.
-func NewPipesBuilder(pipeEntries ...Pipe) Schema {
+// NewPipesBuilder creates a new [SchemaFace] with the given pipes.
+func NewPipesBuilder(pipeEntries ...PipeFace) SchemaFace {
 	return &PipeRegistry{
 		pipes: pipeEntries,
 	}
 }
 
-// ValidateAll returns array of [SchemaValidationError] but if there is no error then it returns nil.
+// ValidateAll returns array of [SchemaError] but if there is no error then it returns nil.
 //
 // it validate all the pipes. but return the first error that pipe. but pipe will be ignored if there is no error.
-func (schema *PipeRegistry) ValidateAll() []*SchemaValidationError {
+func (schema *PipeRegistry) ValidateAll() SchemaErrorList {
 
 	wg := sync.WaitGroup{}
 	mu := sync.Mutex{}
-	errs := []*SchemaValidationError{}
+	errs := SchemaErrorList{}
 
 	for _, pipe := range schema.pipes {
 		wg.Add(1)
-		go func(p Pipe) {
+		go func(p PipeFace) {
 			defer wg.Done()
 
-			err := p.Validate()
-			if err != nil {
+			if err := p.Validate(); err != nil {
 				mu.Lock()
 				errs = append(errs, err)
 				mu.Unlock()
@@ -49,7 +48,7 @@ func (schema *PipeRegistry) ValidateAll() []*SchemaValidationError {
 	return errs
 }
 
-func (schema *PipeRegistry) Validate() *SchemaValidationError {
+func (schema *PipeRegistry) Validate() *SchemaError {
 	for _, pipe := range schema.pipes {
 		if err := pipe.Validate(); err != nil {
 			return err
@@ -59,11 +58,11 @@ func (schema *PipeRegistry) Validate() *SchemaValidationError {
 }
 
 // PipeMap is a map of pipe keys to pipes.
-type PipeMap map[string]Pipe
+type PipeMap map[string]PipeFace
 
-// NewPipesMap creates a new [Schema] from a [PipeMap].
-func NewPipesMap(pipeMap PipeMap) Schema {
-	pipes := []Pipe{}
+// NewPipesMap creates a new [SchemaFace] from a [PipeMap].
+func NewPipesMap(pipeMap PipeMap) SchemaFace {
+	pipes := []PipeFace{}
 	for k, v := range pipeMap {
 		v.setKey(k)
 		pipes = append(pipes, v)
@@ -86,7 +85,7 @@ func Entry(key string) *PipeEntryKeyHolder {
 }
 
 // StringPipe Creates a String Pipe
-func (pk *PipeEntryKeyHolder) StringPipe(value string, actions ...StringPipeAction) Pipe {
+func (pk *PipeEntryKeyHolder) StringPipe(value string, actions ...StringPipeAction) PipeFace {
 	return &stringPipeManager{
 		value:   value,
 		actions: actions,
@@ -95,7 +94,7 @@ func (pk *PipeEntryKeyHolder) StringPipe(value string, actions ...StringPipeActi
 }
 
 // IntPipe Creates a Int Pipe
-func (pk *PipeEntryKeyHolder) IntPipe(value int, actions ...IntPipeAction) Pipe {
+func (pk *PipeEntryKeyHolder) IntPipe(value int, actions ...IntPipeAction) PipeFace {
 	return &IntPipeManager{
 		value:   value,
 		actions: actions,
@@ -104,7 +103,7 @@ func (pk *PipeEntryKeyHolder) IntPipe(value int, actions ...IntPipeAction) Pipe 
 }
 
 // FloatPipe Creates a Float Pipe
-func (pk *PipeEntryKeyHolder) FloatPipe(value float64, actions ...FloatPipeAction) Pipe {
+func (pk *PipeEntryKeyHolder) FloatPipe(value float64, actions ...FloatPipeAction) PipeFace {
 	return &floatPipeManager{
 		value:   value,
 		actions: actions,
@@ -169,7 +168,7 @@ func (c *CustomErrMsg) Run(v any) error {
 }
 
 // ErrMsg is used to specify custom error message
-func ErrMsg(v string) ErrMsgInterface {
+func ErrMsg(v string) CustomErrFace {
 	return &CustomErrMsg{
 		msg: v,
 	}

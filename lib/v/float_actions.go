@@ -25,7 +25,7 @@ func (action *floatAction) Run(value float64) error {
 // Example:
 //
 //	CustomFloat(func(v float64) bool { return v != 0 }, ErrMsg{msg: "value cannot be zero"})
-func CustomFloat(fn func(value float64) bool, option ...ActionOptions) FloatPipeAction {
+func CustomFloat(fn func(value float64) bool, option ...ActionOptionFace) FloatPipeAction {
 	return &floatAction{
 		errorMsg: func(v float64) string {
 			return extractMsg("invalid float", v, option...)
@@ -40,7 +40,7 @@ func CustomFloat(fn func(value float64) bool, option ...ActionOptions) FloatPipe
 // Example:
 //
 //	GtFloat(5.0) // validates v > 5.0
-func GtFloat(value float64, option ...ActionOptions) FloatPipeAction {
+func GtFloat(value float64, option ...ActionOptionFace) FloatPipeAction {
 	return &floatAction{
 		errorMsg: func(v float64) string {
 			return extractMsg("value must be greater than specified value", v, option...)
@@ -57,7 +57,7 @@ func GtFloat(value float64, option ...ActionOptions) FloatPipeAction {
 // Example:
 //
 //	GteFloat(5.0) // validates v >= 5.0
-func GteFloat(value float64, option ...ActionOptions) FloatPipeAction {
+func GteFloat(value float64, option ...ActionOptionFace) FloatPipeAction {
 	return &floatAction{
 		errorMsg: func(v float64) string {
 			return extractMsg("value must be greater than or equal to specified value", v, option...)
@@ -70,7 +70,7 @@ func GteFloat(value float64, option ...ActionOptions) FloatPipeAction {
 
 // IsNegativeFloat validates that a float64 value is less than zero.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsNegativeFloat(option ...ActionOptions) FloatPipeAction {
+func IsNegativeFloat(option ...ActionOptionFace) FloatPipeAction {
 	return &floatAction{
 		errorMsg: func(v float64) string {
 			return extractMsg("value must be negative", v, option...)
@@ -83,7 +83,7 @@ func IsNegativeFloat(option ...ActionOptions) FloatPipeAction {
 
 // IsPositiveFloat validates that a float64 value is greater than or equal to zero.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsPositiveFloat(option ...ActionOptions) FloatPipeAction {
+func IsPositiveFloat(option ...ActionOptionFace) FloatPipeAction {
 	return &floatAction{
 		errorMsg: func(v float64) string {
 			return extractMsg("value must be positive", v, option...)
@@ -100,7 +100,7 @@ func IsPositiveFloat(option ...ActionOptions) FloatPipeAction {
 // Example:
 //
 //	LtFloat(10.0) // validates v < 10.0
-func LtFloat(value float64, option ...ActionOptions) FloatPipeAction {
+func LtFloat(value float64, option ...ActionOptionFace) FloatPipeAction {
 	return &floatAction{
 		errorMsg: func(v float64) string {
 			return extractMsg("value must be less than specified value", v, option...)
@@ -117,7 +117,7 @@ func LtFloat(value float64, option ...ActionOptions) FloatPipeAction {
 // Example:
 //
 //	LteFloat(10.0) // validates v <= 10.0
-func LteFloat(value float64, option ...ActionOptions) FloatPipeAction {
+func LteFloat(value float64, option ...ActionOptionFace) FloatPipeAction {
 	return &floatAction{
 		errorMsg: func(v float64) string {
 			return extractMsg("value must be less than or equal to specified value", v, option...)
@@ -134,7 +134,7 @@ func LteFloat(value float64, option ...ActionOptions) FloatPipeAction {
 // Example:
 //
 //	MaxFloat(100.0) // validates v <= 100.0
-func MaxFloat(max float64, option ...ActionOptions) FloatPipeAction {
+func MaxFloat(max float64, option ...ActionOptionFace) FloatPipeAction {
 	return &floatAction{
 		errorMsg: func(v float64) string {
 			return extractMsg("value exceeds maximum", v, option...)
@@ -152,7 +152,7 @@ func MaxFloat(max float64, option ...ActionOptions) FloatPipeAction {
 //
 //	MinFloat(0.0) // validates v >= 0.0
 //	MinFloat(10.5, ErrMsg{msg: "custom error"})
-func MinFloat(min float64, option ...ActionOptions) FloatPipeAction {
+func MinFloat(min float64, option ...ActionOptionFace) FloatPipeAction {
 	return &floatAction{
 		errorMsg: func(v float64) string {
 			return extractMsg("value must be at least specified minimum", v, option...)

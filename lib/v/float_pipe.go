@@ -14,13 +14,13 @@ type FloatPipeAction interface {
 	Run(v float64) error
 }
 
-// NewFloatPipe creates a new validation pipe for float64 values.
+// FloatPipe creates a new validation pipe for float64 values.
 // The pipe executes the provided actions in sequence during validation.
 //
 // Example:
 //
-//	pipe := NewFloatPipe(42.5, MinFloat(0), MaxFloat(100))
-func NewFloatPipe(value float64, actions ...FloatPipeAction) Pipe {
+//	pipe := FloatPipe(42.5, MinFloat(0), MaxFloat(100))
+func FloatPipe(value float64, actions ...FloatPipeAction) PipeFace {
 	return &floatPipeManager{
 		value:   value,
 		actions: actions,
@@ -41,10 +41,10 @@ func (pipe *floatPipeManager) Key() string {
 
 // Validate runs all validation actions in sequence.
 // Returns a SchemaValidationError if any action fails, otherwise returns nil.
-func (pipe *floatPipeManager) Validate() *SchemaValidationError {
+func (pipe *floatPipeManager) Validate() *SchemaError {
 	for _, action := range pipe.actions {
 		if err := action.Run(pipe.value); err != nil {
-			return &SchemaValidationError{
+			return &SchemaError{
 				Key: pipe.key,
 				Err: err,
 			}

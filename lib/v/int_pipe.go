@@ -14,13 +14,13 @@ type IntPipeAction interface {
 	Run(v int) error
 }
 
-// NewNumberPipe creates a new validation pipe for int values.
+// IntPipe creates a new validation pipe for int values.
 // The pipe executes the provided actions in sequence during validation.
 //
 // Example:
 //
-//	pipe := NewNumberPipe(42, Min(0), Max(100))
-func NewNumberPipe(value int, actions ...IntPipeAction) Pipe {
+//	pipe := IntPipe(42, Min(0), Max(100))
+func IntPipe(value int, actions ...IntPipeAction) PipeFace {
 	return &IntPipeManager{
 		value:   value,
 		actions: actions,
@@ -41,10 +41,10 @@ func (pipe *IntPipeManager) Key() string {
 
 // Validate runs all validation actions in sequence.
 // Returns a SchemaValidationError if any action fails, otherwise returns nil.
-func (pipe *IntPipeManager) Validate() *SchemaValidationError {
+func (pipe *IntPipeManager) Validate() *SchemaError {
 	for _, action := range pipe.actions {
 		if err := action.Run(pipe.value); err != nil {
-			return &SchemaValidationError{
+			return &SchemaError{
 				Key: pipe.key,
 				Err: err,
 			}

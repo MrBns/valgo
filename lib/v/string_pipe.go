@@ -14,16 +14,16 @@ type StringPipeAction interface {
 	Run(v string) error
 }
 
-// NewStringPipe creates a new validation pipe for string values.
+// StringPipe creates a new validation pipe for string values.
 // The pipe executes the provided actions in sequence during validation.
 //
 // Example:
 //
-//	pipe := NewStringPipe("user@example.com", Empty(), IsEmail())
+//	pipe := StringPipe("user@example.com", Empty(), IsEmail())
 //	if err := pipe.Validate(); err != nil {
 //	    log.Fatal(err)
 //	}
-func NewStringPipe(value string, actions ...StringPipeAction) Pipe {
+func StringPipe(value string, actions ...StringPipeAction) PipeFace {
 	return &stringPipeManager{
 		value:   value,
 		actions: actions,
@@ -44,14 +44,14 @@ func (pipe *stringPipeManager) Key() string {
 
 // Validate runs all validation actions in sequence.
 // Returns a SchemaValidationError if any action fails, otherwise returns nil.
-func (pipe *stringPipeManager) Validate() *SchemaValidationError {
+func (pipe *stringPipeManager) Validate() *SchemaError {
 
 	// hasError := false
 
 	for _, action := range pipe.actions {
 		if err := action.Run(pipe.value); err != nil {
 			// hasError = true
-			return &SchemaValidationError{
+			return &SchemaError{
 				Key: pipe.key,
 				Err: err,
 			}

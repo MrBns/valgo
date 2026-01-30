@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/mail"
 	"regexp"
+	"slices"
+	"strings"
 
 	"github.com/mrbns/valgo/lib/is"
 )
@@ -16,18 +18,18 @@ type stringAction struct {
 
 // Run executes the validation function on the given string value.
 // Returns an error if validation fails.
-func (acttion *stringAction) Run(value string) error {
-	if !acttion.validate(value) {
-		return fmt.Errorf("%s", acttion.errorMsg(value))
+func (action *stringAction) Run(value string) error {
+	if !action.validate(value) {
+		return fmt.Errorf("%s", action.errorMsg(value))
 	}
 	return nil
 }
 
 // extractMsg extracts a custom error message from ActionOptions or returns the default message.
-func extractMsg(defaultMsg string, value any, option ...ActionOptions) string {
+func extractMsg(defaultMsg string, value any, option ...ActionOptionFace) string {
 	errMsg := defaultMsg
 	for _, op := range option {
-		if errInterface, ok := op.(ErrMsgInterface); ok {
+		if errInterface, ok := op.(CustomErrFace); ok {
 			errMsg = errInterface.Msg(value)
 		}
 	}
@@ -40,7 +42,7 @@ func extractMsg(defaultMsg string, value any, option ...ActionOptions) string {
 // Example:
 //
 //	CustomString(func(v string) bool { return strings.HasPrefix(v, "test_") })
-func CustomString(fn func(value string) bool, option ...ActionOptions) StringPipeAction {
+func CustomString(fn func(value string) bool, option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("invalid string", v, option...)
@@ -49,15 +51,27 @@ func CustomString(fn func(value string) bool, option ...ActionOptions) StringPip
 	}
 }
 
-// Empty validates that a string is not empty.
+// NotEmpty validates that a string is not empty.
 // The optional ActionOptions parameter can be used to customize the error message.
-func Empty(option ...ActionOptions) StringPipeAction {
+func NotEmpty(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("cannot be empty", v, option...)
 		},
 		validate: func(v string) bool {
 			return v != ""
+		},
+	}
+}
+
+// Enum validate that a string includes from a set of string.
+func Enum(slice []string, option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("value is not allowed", v, option...)
+		},
+		validate: func(v string) bool {
+			return slices.Contains(slice, v)
 		},
 	}
 }
@@ -69,7 +83,7 @@ func Empty(option ...ActionOptions) StringPipeAction {
 // Example:
 //
 //	Pattern(`^\d{3}-\d{2}-\d{4}$`) // SSN format
-func Pattern(regexStr string, option ...ActionOptions) StringPipeAction {
+func Pattern(regexStr string, option ...ActionOptionFace) StringPipeAction {
 	regex := regexp.MustCompile(regexStr)
 	return &stringAction{
 		errorMsg: func(v string) string {
@@ -83,7 +97,7 @@ func Pattern(regexStr string, option ...ActionOptions) StringPipeAction {
 
 // MaxLength validates that a string does not exceed the specified maximum length.
 // The optional ActionOptions parameter can be used to customize the error message.
-func MaxLength(max int, option ...ActionOptions) StringPipeAction {
+func MaxLength(max int, option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("string length exceeds maximum", v, option...)
@@ -96,7 +110,7 @@ func MaxLength(max int, option ...ActionOptions) StringPipeAction {
 
 // MinLength validates that a string has at least the specified minimum length.
 // The optional ActionOptions parameter can be used to customize the error message.
-func MinLength(min int, option ...ActionOptions) StringPipeAction {
+func MinLength(min int, option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("string length must be at least specified minimum", v, option...)
@@ -107,9 +121,62 @@ func MinLength(min int, option ...ActionOptions) StringPipeAction {
 	}
 }
 
+// HasPrefix validates that a string starts with the provided prefix.
+// The optional ActionOptions parameter can be used to customize the error message.
+func HasPrefix(prefix string, option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("must start with "+prefix, v, option...)
+		},
+		validate: func(v string) bool {
+			return strings.HasPrefix(v, prefix)
+		},
+	}
+}
+
+// HasSuffix validates that a string end with the provided prefix.
+// The optional ActionOptions parameter can be used to customize the error message.
+func HasSuffix(suffix string, option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("must end with "+suffix, v, option...)
+		},
+		validate: func(v string) bool {
+			return strings.HasSuffix(v, suffix)
+		},
+	}
+}
+
+// EqualFold validates that a string is equal to the provided string under Unicode case-folding.
+// This comparison is case-insensitive and handles Unicode correctly.
+// The optional ActionOptions parameter can be used to customize the error message.
+func EqualFold(target string, option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("must be equal to "+target+" (case-insensitive)", v, option...)
+		},
+		validate: func(v string) bool {
+			return strings.EqualFold(v, target)
+		},
+	}
+}
+
+// Contains validates that a string contains the provided substring.
+// The optional ActionOptions parameter can be used to customize the error message.
+func Contains(substr string, option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("must contain "+substr, v, option...)
+		},
+		validate: func(v string) bool {
+			return strings.Contains(v, substr)
+		},
+	}
+}
+
 // IsAlpha validates that a string contains only alphabetic characters.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsAlpha(option ...ActionOptions) StringPipeAction {
+func IsAlpha(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("must contain only alphabetic characters", v, option...)
@@ -120,7 +187,7 @@ func IsAlpha(option ...ActionOptions) StringPipeAction {
 
 // IsAlphaNumeric validates that a string contains only alphanumeric characters.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsAlphaNumeric(option ...ActionOptions) StringPipeAction {
+func IsAlphaNumeric(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("must contain only alphanumeric characters", v, option...)
@@ -131,7 +198,7 @@ func IsAlphaNumeric(option ...ActionOptions) StringPipeAction {
 
 // IsAscii validates that a string contains only ASCII characters.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsAscii(option ...ActionOptions) StringPipeAction {
+func IsAscii(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("must contain only ASCII characters", v, option...)
@@ -142,7 +209,7 @@ func IsAscii(option ...ActionOptions) StringPipeAction {
 
 // IsBase32 validates that a string is valid base32-encoded data.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsBase32(option ...ActionOptions) StringPipeAction {
+func IsBase32(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid base32 string", v, option...)
@@ -153,7 +220,7 @@ func IsBase32(option ...ActionOptions) StringPipeAction {
 
 // IsBase58 validates that a string uses base58 encoding.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsBase58(option ...ActionOptions) StringPipeAction {
+func IsBase58(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid base58 string", v, option...)
@@ -164,7 +231,7 @@ func IsBase58(option ...ActionOptions) StringPipeAction {
 
 // IsBase64 validates that a string is valid base64-encoded data.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsBase64(option ...ActionOptions) StringPipeAction {
+func IsBase64(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid base64 string", v, option...)
@@ -175,7 +242,7 @@ func IsBase64(option ...ActionOptions) StringPipeAction {
 
 // IsBitcoinAddress validates that a string is a valid Bitcoin address.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsBitcoinAddress(option ...ActionOptions) StringPipeAction {
+func IsBitcoinAddress(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid Bitcoin address", v, option...)
@@ -186,7 +253,7 @@ func IsBitcoinAddress(option ...ActionOptions) StringPipeAction {
 
 // IsCreditCard validates that a string is a valid credit card number using the Luhn algorithm.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsCreditCard(option ...ActionOptions) StringPipeAction {
+func IsCreditCard(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid credit card number", v, option...)
@@ -197,7 +264,7 @@ func IsCreditCard(option ...ActionOptions) StringPipeAction {
 
 // IsDate validates that a string represents a date in YYYY-MM-DD format.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsDate(option ...ActionOptions) StringPipeAction {
+func IsDate(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid date", v, option...)
@@ -208,7 +275,7 @@ func IsDate(option ...ActionOptions) StringPipeAction {
 
 // IsDataURI validates that a string is a valid data URI.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsDataURI(option ...ActionOptions) StringPipeAction {
+func IsDataURI(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid data URI", v, option...)
@@ -219,7 +286,7 @@ func IsDataURI(option ...ActionOptions) StringPipeAction {
 
 // IsDecimal validates that a string represents a valid decimal number.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsDecimal(option ...ActionOptions) StringPipeAction {
+func IsDecimal(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid decimal number", v, option...)
@@ -231,7 +298,7 @@ func IsDecimal(option ...ActionOptions) StringPipeAction {
 // IsEmail validates that a string is a valid email address.
 // Uses Go's standard mail.ParseAddress for validation.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsEmail(option ...ActionOptions) StringPipeAction {
+func IsEmail(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid email", v, option...)
@@ -245,7 +312,7 @@ func IsEmail(option ...ActionOptions) StringPipeAction {
 
 // IsEvmAddress validates that a string is a valid Ethereum Virtual Machine address.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsEvmAddress(option ...ActionOptions) StringPipeAction {
+func IsEvmAddress(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid EVM address", v, option...)
@@ -256,7 +323,7 @@ func IsEvmAddress(option ...ActionOptions) StringPipeAction {
 
 // IsHTML validates that a string contains HTML tags.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsHTML(option ...ActionOptions) StringPipeAction {
+func IsHTML(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid HTML string", v, option...)
@@ -267,7 +334,7 @@ func IsHTML(option ...ActionOptions) StringPipeAction {
 
 // IsHexColor validates that a string is a valid hexadecimal color code.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsHexColor(option ...ActionOptions) StringPipeAction {
+func IsHexColor(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid hex color", v, option...)
@@ -278,7 +345,7 @@ func IsHexColor(option ...ActionOptions) StringPipeAction {
 
 // IsHexDecimal validates that a string contains only hexadecimal characters.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsHexDecimal(option ...ActionOptions) StringPipeAction {
+func IsHexDecimal(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid hexadecimal string", v, option...)
@@ -289,7 +356,7 @@ func IsHexDecimal(option ...ActionOptions) StringPipeAction {
 
 // IsHSL validates that a string represents a valid HSL color.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsHSL(option ...ActionOptions) StringPipeAction {
+func IsHSL(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid HSL color", v, option...)
@@ -300,7 +367,7 @@ func IsHSL(option ...ActionOptions) StringPipeAction {
 
 // IsIPV4 validates that a string is a valid IPv4 address.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsIPV4(option ...ActionOptions) StringPipeAction {
+func IsIPV4(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid IPv4 address", v, option...)
@@ -311,7 +378,7 @@ func IsIPV4(option ...ActionOptions) StringPipeAction {
 
 // IsIPV6 validates that a string is a valid IPv6 address.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsIPV6(option ...ActionOptions) StringPipeAction {
+func IsIPV6(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid IPv6 address", v, option...)
@@ -322,7 +389,7 @@ func IsIPV6(option ...ActionOptions) StringPipeAction {
 
 // IsJSON validates that a string is valid JSON data.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsJSON(option ...ActionOptions) StringPipeAction {
+func IsJSON(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid JSON string", v, option...)
@@ -333,7 +400,7 @@ func IsJSON(option ...ActionOptions) StringPipeAction {
 
 // IsRGB validates that a string represents a valid RGB color.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsRGB(option ...ActionOptions) StringPipeAction {
+func IsRGB(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid RGB color", v, option...)
@@ -344,7 +411,7 @@ func IsRGB(option ...ActionOptions) StringPipeAction {
 
 // IsULID validates that a string is a valid ULID (Universally Unique Lexicographically Sortable Identifier).
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsULID(option ...ActionOptions) StringPipeAction {
+func IsULID(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid ULID", v, option...)
@@ -355,7 +422,7 @@ func IsULID(option ...ActionOptions) StringPipeAction {
 
 // IsURL validates that a string is a valid URL.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsURL(option ...ActionOptions) StringPipeAction {
+func IsURL(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid URL", v, option...)
@@ -366,7 +433,7 @@ func IsURL(option ...ActionOptions) StringPipeAction {
 
 // IsUUID validates that a string is a valid UUID in any version.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsUUID(option ...ActionOptions) StringPipeAction {
+func IsUUID(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid UUID", v, option...)
@@ -377,7 +444,7 @@ func IsUUID(option ...ActionOptions) StringPipeAction {
 
 // IsUUIDV1 validates that a string is a valid UUID version 1.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsUUIDV1(option ...ActionOptions) StringPipeAction {
+func IsUUIDV1(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid UUIDv1", v, option...)
@@ -388,7 +455,7 @@ func IsUUIDV1(option ...ActionOptions) StringPipeAction {
 
 // IsUUIDV3 validates that a string is a valid UUID version 3.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsUUIDV3(option ...ActionOptions) StringPipeAction {
+func IsUUIDV3(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid UUIDv3", v, option...)
@@ -399,7 +466,7 @@ func IsUUIDV3(option ...ActionOptions) StringPipeAction {
 
 // IsUUIDV4 validates that a string is a valid UUID version 4.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsUUIDV4(option ...ActionOptions) StringPipeAction {
+func IsUUIDV4(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid UUIDv4", v, option...)
@@ -410,7 +477,7 @@ func IsUUIDV4(option ...ActionOptions) StringPipeAction {
 
 // IsUUIDV5 validates that a string is a valid UUID version 5.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsUUIDV5(option ...ActionOptions) StringPipeAction {
+func IsUUIDV5(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid UUIDv5", v, option...)
@@ -421,7 +488,7 @@ func IsUUIDV5(option ...ActionOptions) StringPipeAction {
 
 // IsValidPath validates that a string is a valid file system path.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsValidPath(option ...ActionOptions) StringPipeAction {
+func IsValidPath(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid path", v, option...)
@@ -432,7 +499,7 @@ func IsValidPath(option ...ActionOptions) StringPipeAction {
 
 // IsValidPort validates that a string represents a valid port number (0-65535).
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsValidPort(option ...ActionOptions) StringPipeAction {
+func IsValidPort(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid port number", v, option...)
@@ -443,7 +510,7 @@ func IsValidPort(option ...ActionOptions) StringPipeAction {
 
 // IsXML validates that a string is valid XML data.
 // The optional ActionOptions parameter can be used to customize the error message.
-func IsXML(option ...ActionOptions) StringPipeAction {
+func IsXML(option ...ActionOptionFace) StringPipeAction {
 	return &stringAction{
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid XML string", v, option...)
