@@ -40,4 +40,6 @@ var (
 	dataURIRegex = regexp.MustCompile(`^data:(?:[a-zA-Z0-9]+\/[a-zA-Z0-9\-+.]+)?(?:;[a-zA-Z0-9\-]+=(?:[a-zA-Z0-9\-]+|"[^"]*"))*(?:;base64)?,[a-zA-Z0-9+/\-_=%]*$`)
 	// Date: YYYY-MM-DD with valid month (01-12) and day (01-31) ranges
 	dateRegex = regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$`)
+	//Email: h@e.c
+	emailRegex = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
 )

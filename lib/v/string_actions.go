@@ -2,7 +2,6 @@ package v
 
 import (
 	"fmt"
-	"net/mail"
 	"regexp"
 	"slices"
 	"strings"
@@ -303,10 +302,7 @@ func IsEmail(option ...ActionOptionFace) StringPipeAction {
 		errorMsg: func(v string) string {
 			return extractMsg("not a valid email", v, option...)
 		},
-		validate: func(v string) bool {
-			_, err := mail.ParseAddress(v)
-			return err == nil
-		},
+		validate: is.IsEmail,
 	}
 }
 

@@ -14,6 +14,12 @@ import (
 	"unicode"
 )
 
+// Email Validation <h@h.h>.
+// not strictly RFC compilance. it just follow the structure.
+func IsEmail(v string) bool {
+	return emailRegex.MatchString(v)
+}
+
 // UUID validation
 func IsUUID(v string) bool {
 	return uuidRegex.MatchString(strings.ToLower(v))
