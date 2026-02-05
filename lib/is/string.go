@@ -204,7 +204,58 @@ func IsCreditCard(v string) bool {
 //
 // Accepts format: rgb(r, g, b) where r, g, b are 0-255.
 func IsRGB(v string) bool {
-	return len(rgbRegex.FindStringSubmatch(v)) > 0
+	matches := rgbRegex.FindStringSubmatch(v)
+	if len(matches) == 0 {
+		return false
+	}
+
+	isRGBA := strings.HasPrefix(v, "rgba")
+	minLen := 4
+	if isRGBA {
+		minLen = 5
+		alpha := matches[4]
+
+		before, _ := strings.CutSuffix(alpha, "%")
+
+		// matching alpha channel
+		if val, err := strconv.Atoi(before); err == nil {
+			if val < 0 || val > 100 {
+				return false
+			}
+		} else if val, err := strconv.ParseFloat(alpha, 32); err == nil {
+			if val < 0.0 && val > 1.00 {
+				return false
+			}
+		} else {
+			return false
+		}
+
+	}
+
+	if len(matches) < minLen {
+		return false
+	}
+
+	var isInRange = func(s string) bool {
+		var value int
+		var err error
+
+		if before, ok := strings.CutSuffix(s, "%"); ok {
+			value, err = strconv.Atoi(before)
+		} else {
+			value, err = strconv.Atoi(s)
+		}
+
+		return err == nil && value >= 0 && value <= 255
+	}
+
+	for i := 1; i <= 3; i++ {
+		if !isInRange(matches[i]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // IsHexColor validates whether the string is a valid hexadecimal color code.
