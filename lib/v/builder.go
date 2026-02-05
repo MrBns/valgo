@@ -12,21 +12,21 @@ type PipeRegistry struct {
 	pipes []PipeFace
 }
 
-// NewPipesBuilder creates a new [SchemaFace] with the given pipes.
-func NewPipesBuilder(pipeEntries ...PipeFace) SchemaFace {
+// NewPipesBuilder creates a new [Pipeset] with the given pipes.
+func NewPipesBuilder(pipeEntries ...PipeFace) Pipeset {
 	return &PipeRegistry{
 		pipes: pipeEntries,
 	}
 }
 
-// ValidateAll returns array of [SchemaError] but if there is no error then it returns nil.
+// ValidateAll returns array of [SchemaErrors] but if there is no error then it returns nil.
 //
 // it validate all the pipes. but return the first error that pipe. but pipe will be ignored if there is no error.
-func (schema *PipeRegistry) ValidateAll() SchemaErrorList {
+func (schema *PipeRegistry) ValidateAll() *SchemaErrors {
 
 	wg := sync.WaitGroup{}
 	mu := sync.Mutex{}
-	errs := SchemaErrorList{}
+	errs := &SchemaErrors{}
 
 	for _, pipe := range schema.pipes {
 		wg.Add(1)
@@ -35,14 +35,14 @@ func (schema *PipeRegistry) ValidateAll() SchemaErrorList {
 
 			if err := p.Validate(); err != nil {
 				mu.Lock()
-				errs = append(errs, err)
+				errs.Errors = append(errs.Errors, err)
 				mu.Unlock()
 			}
 		}(pipe)
 	}
 
 	wg.Wait()
-	if len(errs) == 0 {
+	if len(errs.Errors) == 0 {
 		return nil
 	}
 	return errs
@@ -60,8 +60,8 @@ func (schema *PipeRegistry) Validate() *SchemaError {
 // PipeMap is a map of pipe keys to pipes.
 type PipeMap map[string]PipeFace
 
-// NewPipesMap creates a new [SchemaFace] from a [PipeMap].
-func NewPipesMap(pipeMap PipeMap) SchemaFace {
+// NewPipesMap creates a new [Pipeset] from a [PipeMap].
+func NewPipesMap(pipeMap PipeMap) Pipeset {
 	pipes := []PipeFace{}
 	for k, v := range pipeMap {
 		v.setKey(k)
