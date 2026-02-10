@@ -514,3 +514,207 @@ func IsXML(option ...ActionOptionFace) StringPipeAction {
 		validate: is.IsXML,
 	}
 }
+
+// IsANSIC validates that a string matches ANSIC time format.
+// Format: "Mon Jan _2 15:04:05 2006"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsANSIC(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid ANSIC time format", v, option...)
+		},
+		validate: is.IsANSIC,
+	}
+}
+
+// IsUnixDate validates that a string matches Unix date format.
+// Format: "Mon Jan _2 15:04:05 MST 2006"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsUnixDate(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid Unix date format", v, option...)
+		},
+		validate: is.IsUnixDate,
+	}
+}
+
+// IsRubyDate validates that a string matches Ruby date format.
+// Format: "Mon Jan 02 15:04:05 -0700 2006"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsRubyDate(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid Ruby date format", v, option...)
+		},
+		validate: is.IsRubyDate,
+	}
+}
+
+// IsRFC822 validates that a string matches RFC822 time format.
+// Format: "02 Jan 06 15:04 MST"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsRFC822(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid RFC822 time format", v, option...)
+		},
+		validate: is.IsRFC822,
+	}
+}
+
+// IsRFC822Z validates that a string matches RFC822Z time format.
+// Format: "02 Jan 06 15:04 -0700"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsRFC822Z(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid RFC822Z time format", v, option...)
+		},
+		validate: is.IsRFC822Z,
+	}
+}
+
+// IsRFC850 validates that a string matches RFC850 time format.
+// Format: "Monday, 02-Jan-06 15:04:05 MST"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsRFC850(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid RFC850 time format", v, option...)
+		},
+		validate: is.IsRFC850,
+	}
+}
+
+// IsRFC1123 validates that a string matches RFC1123 time format.
+// Format: "Mon, 02 Jan 2006 15:04:05 MST"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsRFC1123(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid RFC1123 time format", v, option...)
+		},
+		validate: is.IsRFC1123,
+	}
+}
+
+// IsRFC1123Z validates that a string matches RFC1123Z time format.
+// Format: "Mon, 02 Jan 2006 15:04:05 -0700"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsRFC1123Z(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid RFC1123Z time format", v, option...)
+		},
+		validate: is.IsRFC1123Z,
+	}
+}
+
+// IsRFC3339 validates that a string matches RFC3339 time format.
+// Format: "2006-01-02T15:04:05Z07:00"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsRFC3339(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid RFC3339 time format", v, option...)
+		},
+		validate: is.IsRFC3339,
+	}
+}
+
+// IsRFC3339Nano validates that a string matches RFC3339Nano time format.
+// Format: "2006-01-02T15:04:05.999999999Z07:00"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsRFC3339Nano(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid RFC3339Nano time format", v, option...)
+		},
+		validate: is.IsRFC3339Nano,
+	}
+}
+
+// IsKitchen validates that a string matches Kitchen time format.
+// Format: "3:04PM"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsKitchen(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid Kitchen time format", v, option...)
+		},
+		validate: is.IsKitchen,
+	}
+}
+
+// IsStamp validates that a string matches Stamp time format.
+// Format: "Jan _2 15:04:05"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsStamp(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid Stamp time format", v, option...)
+		},
+		validate: is.IsStamp,
+	}
+}
+
+// IsStampMilli validates that a string matches StampMilli time format.
+// Format: "Jan _2 15:04:05.000"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsStampMilli(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid StampMilli time format", v, option...)
+		},
+		validate: is.IsStampMilli,
+	}
+}
+
+// IsStampMicro validates that a string matches StampMicro time format.
+// Format: "Jan _2 15:04:05.000000"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsStampMicro(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid StampMicro time format", v, option...)
+		},
+		validate: is.IsStampMicro,
+	}
+}
+
+// IsStampNano validates that a string matches StampNano time format.
+// Format: "Jan _2 15:04:05.000000000"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsStampNano(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid StampNano time format", v, option...)
+		},
+		validate: is.IsStampNano,
+	}
+}
+
+// IsDateTime validates that a string matches DateTime format.
+// Format: "2006-01-02 15:04:05"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsDateTime(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid DateTime format", v, option...)
+		},
+		validate: is.IsDateTime,
+	}
+}
+
+// IsTimeOnly validates that a string matches TimeOnly format.
+// Format: "15:04:05"
+// The optional ActionOptions parameter can be used to customize the error message.
+func IsTimeOnly(option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("not a valid TimeOnly format", v, option...)
+		},
+		validate: is.IsTimeOnly,
+	}
+}

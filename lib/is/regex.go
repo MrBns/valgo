@@ -42,4 +42,40 @@ var (
 	dateRegex = regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$`)
 	//Email: h@e.c
 	emailRegex = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
+
+	// Time format patterns
+	// ANSIC: "Mon Jan _2 15:04:05 2006" - day of week, month, day (space-padded), time, year
+	ansicRegex = regexp.MustCompile(`^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (?:\d| \d|\d{2}) \d{2}:\d{2}:\d{2} \d{4}$`)
+	// UnixDate: "Mon Jan _2 15:04:05 MST 2006" - like ANSIC with timezone
+	unixDateRegex = regexp.MustCompile(`^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (?:\d| \d|\d{2}) \d{2}:\d{2}:\d{2} [A-Z]{3,4} \d{4}$`)
+	// RubyDate: "Mon Jan 02 15:04:05 -0700 2006" - day zero-padded, numeric timezone
+	rubyDateRegex = regexp.MustCompile(`^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{2} \d{2}:\d{2}:\d{2} [+-]\d{4} \d{4}$`)
+	// RFC822: "02 Jan 06 15:04 MST" - day, month, 2-digit year, HH:MM, timezone
+	rfc822Regex = regexp.MustCompile(`^\d{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{2} \d{2}:\d{2} [A-Z]{3,4}$`)
+	// RFC822Z: "02 Jan 06 15:04 -0700" - RFC822 with numeric timezone
+	rfc822ZRegex = regexp.MustCompile(`^\d{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{2} \d{2}:\d{2} [+-]\d{4}$`)
+	// RFC850: "Monday, 02-Jan-06 15:04:05 MST" - full day name, hyphenated date
+	rfc850Regex = regexp.MustCompile(`^(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), \d{2}-(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-\d{2} \d{2}:\d{2}:\d{2} [A-Z]{3,4}$`)
+	// RFC1123: "Mon, 02 Jan 2006 15:04:05 MST" - short day with comma, 4-digit year
+	rfc1123Regex = regexp.MustCompile(`^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} [A-Z]{3,4}$`)
+	// RFC1123Z: "Mon, 02 Jan 2006 15:04:05 -0700" - RFC1123 with numeric timezone
+	rfc1123ZRegex = regexp.MustCompile(`^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} [+-]\d{4}$`)
+	// RFC3339: "2006-01-02T15:04:05Z07:00" - ISO format with T separator
+	rfc3339Regex = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})$`)
+	// RFC3339Nano: "2006-01-02T15:04:05.999999999Z07:00" - RFC3339 with nanoseconds
+	rfc3339NanoRegex = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$`)
+	// Kitchen: "3:04PM" - hour (1-12), minute, AM/PM
+	kitchenRegex = regexp.MustCompile(`^\d{1,2}:\d{2}(?:AM|PM)$`)
+	// Stamp: "Jan _2 15:04:05" - month, space-padded day, time
+	stampRegex = regexp.MustCompile(`^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (?:\d| \d|\d{2}) \d{2}:\d{2}:\d{2}$`)
+	// StampMilli: "Jan _2 15:04:05.000" - Stamp with milliseconds
+	stampMilliRegex = regexp.MustCompile(`^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (?:\d| \d|\d{2}) \d{2}:\d{2}:\d{2}\.\d{3}$`)
+	// StampMicro: "Jan _2 15:04:05.000000" - Stamp with microseconds
+	stampMicroRegex = regexp.MustCompile(`^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (?:\d| \d|\d{2}) \d{2}:\d{2}:\d{2}\.\d{6}$`)
+	// StampNano: "Jan _2 15:04:05.000000000" - Stamp with nanoseconds
+	stampNanoRegex = regexp.MustCompile(`^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (?:\d| \d|\d{2}) \d{2}:\d{2}:\d{2}\.\d{9}$`)
+	// DateTime: "2006-01-02 15:04:05" - date and time with space separator
+	dateTimeRegex = regexp.MustCompile(`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$`)
+	// TimeOnly: "15:04:05" - HH:MM:SS format
+	timeOnlyRegex = regexp.MustCompile(`^\d{2}:\d{2}:\d{2}$`)
 )
