@@ -12,17 +12,35 @@ import (
 // if [Schema.Rules] return nil, it will skip the validation.
 type Include struct{}
 
-func (s *Include) Rules() Pipeset {
-	return nil
+func (s *Include) Rules() (Pipeset, error) {
+	return nil, nil
 }
 
 func Validate(s Schema) *SchemaError {
-	rules := s.Rules()
+	rules, err := s.Rules()
+	if err != nil {
+		return &SchemaError{
+			Key: "_pre-check",
+			Err: err,
+		}
+	}
 	return rules.Validate()
 }
 
 func ValidateAll(s Schema) *SchemaErrors {
-	rules := s.Rules()
+	rules, err := s.Rules()
+
+	if err != nil {
+		return &SchemaErrors{
+			Errors: []*SchemaError{
+				&SchemaError{
+					Key: "_pre-check",
+					Err: err,
+				},
+			},
+		}
+	}
+
 	return rules.ValidateAll()
 }
 
@@ -40,10 +58,15 @@ func Parse(reader io.Reader, to Schema) *ParseErrors {
 		return parseErrors
 	}
 
-	pipeset := to.Rules()
+	pipeset, err := to.Rules()
+	if err != nil {
+		return &ParseErrors{
+			PreErrors: err,
+		}
+	}
 
 	if pipeset == nil {
-		return &ParseErrors{}
+		return nil
 	}
 
 	errors := pipeset.ValidateAll()
@@ -67,15 +90,20 @@ func ParseBytes(data []byte, to Schema) *ParseErrors {
 		return parseErrors
 	}
 
-	schema := to.Rules()
-
-	if schema == nil {
-		return &ParseErrors{}
+	pipeset, err := to.Rules()
+	if err != nil {
+		return &ParseErrors{
+			PreErrors: err,
+		}
 	}
 
-	errors := schema.ValidateAll()
+	if pipeset == nil {
+		return nil
+	}
+
+	parseErros := pipeset.ValidateAll()
 
 	return &ParseErrors{
-		SchemaErrors: errors,
+		SchemaErrors: parseErros,
 	}
 }

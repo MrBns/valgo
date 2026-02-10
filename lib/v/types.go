@@ -1,7 +1,7 @@
 package v
 
 type Schema interface {
-	Rules() Pipeset
+	Rules() (Pipeset, error)
 }
 
 // Pipeset is the interface that wraps the Validate method.

@@ -114,7 +114,7 @@ func AfterNow(option ...ActionOptionFace) TimePipeAction {
 
 // NotZero validates that a time.Time value is not the zero value.
 // The optional ActionOptions parameter can be used to customize the error message.
-func NotZero(option ...ActionOptionFace) TimePipeAction {
+func NotEmptyDate(option ...ActionOptionFace) TimePipeAction {
 	return &timeAction{
 		errorMsg: func(v time.Time) string {
 			return extractMsg("time cannot be zero value", v, option...)
@@ -228,18 +228,18 @@ func NotEqual(t time.Time, option ...ActionOptionFace) TimePipeAction {
 	}
 }
 
-// OldOf validates that a time.Time value is at least the specified number of days old.
+// OldOfDays validates that a time.Time value is at least the specified number of days old.
 // The value must be at least `days` days before the current time.
 //
 // Example:
 //
-//	OldOf(3) // time must be at least 3 days old
+//	OldOfDays(3) // time must be at least 3 days old
 //
 // Edge cases:
 // - Negative days: treated as 0
 // - DST transitions: calculations account for timezone changes
 // - Leap years: handled correctly by Go's time package
-func OldOf(days int, option ...ActionOptionFace) TimePipeAction {
+func OldOfDays(days int, option ...ActionOptionFace) TimePipeAction {
 	if days < 0 {
 		days = 0
 	}
@@ -249,6 +249,32 @@ func OldOf(days int, option ...ActionOptionFace) TimePipeAction {
 		},
 		validate: func(v time.Time) bool {
 			cutoff := time.Now().AddDate(0, 0, -days)
+			return v.Before(cutoff)
+		},
+	}
+}
+
+// OldOf validates that a time.Time value is at least the specified duration old.
+// The value must be at least `duration` before the current time.
+//
+// Example:
+//
+//	OldOf(24 * time.Hour) // time must be at least 24 hours old
+//
+// Edge cases:
+// - Negative duration: treated as 0
+// - Nanosecond precision: calculations include nanosecond precision
+// - Zero duration: any time strictly before now is valid
+func OldOf(duration time.Duration, option ...ActionOptionFace) TimePipeAction {
+	if duration < 0 {
+		duration = 0
+	}
+	return &timeAction{
+		errorMsg: func(v time.Time) string {
+			return extractMsg(fmt.Sprintf("time must be at least %v old", duration), v, option...)
+		},
+		validate: func(v time.Time) bool {
+			cutoff := time.Now().Add(-duration)
 			return v.Before(cutoff)
 		},
 	}
