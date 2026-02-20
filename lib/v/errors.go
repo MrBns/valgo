@@ -25,6 +25,25 @@ type ParseErrors struct {
 	PostErrors error `json:"post_error"`
 }
 
+func (parseError *ParseErrors) Error() string {
+	if parseError == nil {
+		return ""
+	}
+	if parseError.PreErrors != nil {
+		return "v.parse_error: " + parseError.ParseError.Error()
+	} else if parseError.PostErrors != nil {
+
+		return "v.pre_error: " + parseError.ParseError.Error()
+	} else if parseError.SchemaErrors != nil && parseError.SchemaErrors.Errors != nil &&
+		len(parseError.SchemaErrors.Errors) != 0 {
+		return "v.schema_error:"
+	} else if parseError.PostErrors != nil {
+		return "v.post_error:" + parseError.PostErrors.Error()
+	} else {
+		return ""
+	}
+}
+
 // ErrorFromSchemaError extracts the error from a SchemaError.
 // It returns nil if the SchemaError pointer is nil, otherwise returns the underlying error message.
 func ErrorFromSchemaError(e *SchemaError) error {

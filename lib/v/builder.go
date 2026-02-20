@@ -3,7 +3,6 @@ package v
 import (
 	"strconv"
 	"strings"
-	"sync"
 )
 
 // PipeRegistry where all pipes will be compiled and saved.
@@ -12,8 +11,8 @@ type PipeRegistry struct {
 	pipes []PipeFace
 }
 
-// NewPipesBuilder creates a new [Pipeset] with the given pipes.
-func NewPipesBuilder(pipeEntries ...PipeFace) Pipeset {
+// NewPipesBuilder creates a new [PipeSet] with the given pipes.
+func NewPipesBuilder(pipeEntries ...PipeFace) PipeSet {
 	return &PipeRegistry{
 		pipes: pipeEntries,
 	}
@@ -23,29 +22,27 @@ func NewPipesBuilder(pipeEntries ...PipeFace) Pipeset {
 //
 // it validate all the pipes. but return the first error that pipe. but pipe will be ignored if there is no error.
 func (schema *PipeRegistry) ValidateAll() *SchemaErrors {
+	return schema.validateAllSequential()
+}
 
-	wg := sync.WaitGroup{}
-	mu := sync.Mutex{}
-	errs := &SchemaErrors{}
+func (schema *PipeRegistry) ValidateAllParallel() *SchemaErrors {
+	return schema.validateAllSequential()
+}
+
+func (schema *PipeRegistry) validateAllSequential() *SchemaErrors {
+	var errors []*SchemaError
 
 	for _, pipe := range schema.pipes {
-		wg.Add(1)
-		go func(p PipeFace) {
-			defer wg.Done()
-
-			if err := p.Validate(); err != nil {
-				mu.Lock()
-				errs.Errors = append(errs.Errors, err)
-				mu.Unlock()
-			}
-		}(pipe)
+		if err := pipe.Validate(); err != nil {
+			errors = append(errors, err)
+		}
 	}
 
-	wg.Wait()
-	if len(errs.Errors) == 0 {
+	if len(errors) == 0 {
 		return nil
 	}
-	return errs
+
+	return &SchemaErrors{Errors: errors}
 }
 
 func (schema *PipeRegistry) Validate() *SchemaError {
@@ -57,12 +54,9 @@ func (schema *PipeRegistry) Validate() *SchemaError {
 	return nil
 }
 
-// PipeMap is a map of pipe keys to pipes.
-type PipeMap map[string]PipeFace
-
-// NewPipesMap creates a new [Pipeset] from a [PipeMap].
-func NewPipesMap(pipeMap PipeMap) Pipeset {
-	pipes := []PipeFace{}
+// NewPipesMap creates a new [PipeSet] from a [PipeMap].
+func NewPipesMap(pipeMap PipeMap) PipeSet {
+	pipes := make([]PipeFace, 0, len(pipeMap))
 	for k, v := range pipeMap {
 		v.setKey(k)
 		pipes = append(pipes, v)

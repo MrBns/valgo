@@ -12,7 +12,7 @@ type TestSchema struct {
 	Age  int    `json:"age"`
 }
 
-func (s *TestSchema) Rules() (v.Pipeset, error) {
+func (s *TestSchema) Rules() (v.PipeSet, error) {
 	return v.NewPipesMap(v.PipeMap{
 		"name": v.StringPipe(s.Name, v.NotEmpty(), v.MaxLength(10)),
 		"age":  v.IntPipe(s.Age, v.NonZero()),

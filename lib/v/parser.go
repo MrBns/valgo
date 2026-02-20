@@ -5,14 +5,14 @@ import (
 	"io"
 )
 
-// this struct should be embedd to the struct
+// this struct should be embed to the struct
 // to make this struct parseable.
 //
-// This expect to Implement [Schema.Rules] and return a [Pipeset]
+// This expect to Implement [Schema.Rules] and return a [PipeSet]
 // if [Schema.Rules] return nil, it will skip the validation.
 type Include struct{}
 
-func (s *Include) Rules() (Pipeset, error) {
+func (s *Include) Rules() (PipeSet, error) {
 	return nil, nil
 }
 
@@ -33,7 +33,7 @@ func ValidateAll(s Schema) *SchemaErrors {
 	if err != nil {
 		return &SchemaErrors{
 			Errors: []*SchemaError{
-				&SchemaError{
+				{
 					Key: "_pre-check",
 					Err: err,
 				},
@@ -44,8 +44,15 @@ func ValidateAll(s Schema) *SchemaErrors {
 	return rules.ValidateAll()
 }
 
+func ValidateAllParallel(s Schema) *SchemaErrors {
+	return ValidateAll(s)
+}
+
 // Parse a schema from [io.Reader] and Validate.
 // but if [Schema.Rules] return nil it will skip the validation.
+//
+// Returns nil if there is no error. but return [ParseErrors] if there is
+// any kind of error exists.
 func Parse(reader io.Reader, to Schema) *ParseErrors {
 
 	var parseErrors *ParseErrors = nil
@@ -58,18 +65,18 @@ func Parse(reader io.Reader, to Schema) *ParseErrors {
 		return parseErrors
 	}
 
-	pipeset, err := to.Rules()
+	pipeSet, err := to.Rules()
 	if err != nil {
 		return &ParseErrors{
 			PreErrors: err,
 		}
 	}
 
-	if pipeset == nil {
+	if pipeSet == nil {
 		return nil
 	}
 
-	errors := pipeset.ValidateAll()
+	errors := pipeSet.ValidateAll()
 
 	return &ParseErrors{
 		SchemaErrors: errors,

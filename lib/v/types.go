@@ -1,12 +1,12 @@
 package v
 
 type Schema interface {
-	Rules() (Pipeset, error)
+	Rules() (PipeSet, error)
 }
 
-// Pipeset is the interface that wraps the Validate method.
+// PipeSet is the interface that wraps the Validate method.
 // Validate returns a list of SchemaValidationError if validation fails.
-type Pipeset interface {
+type PipeSet interface {
 	ValidateAll() *SchemaErrors
 	Validate() *SchemaError
 }
