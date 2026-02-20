@@ -51,9 +51,48 @@ func ValidateAllParallel(s Schema) *SchemaErrors {
 // Parse a schema from [io.Reader] and Validate.
 // but if [Schema.Rules] return nil it will skip the validation.
 //
+// Parse will return only one error which occur first.
+//
 // Returns nil if there is no error. but return [ParseErrors] if there is
 // any kind of error exists.
 func Parse(reader io.Reader, to Schema) *ParseErrors {
+
+	var parseErrors *ParseErrors = nil
+
+	err := json.NewDecoder(reader).Decode(to)
+	if err != nil {
+		parseErrors = &ParseErrors{
+			ParseError: err,
+		}
+		return parseErrors
+	}
+
+	pipeSet, err := to.Rules()
+	if err != nil {
+		return &ParseErrors{
+			PreErrors: err,
+		}
+	}
+
+	if pipeSet == nil {
+		return nil
+	}
+
+	errors := pipeSet.Validate()
+
+	return &ParseErrors{
+		SchemaErrors: &SchemaErrors{
+			Errors: []*SchemaError{errors},
+		},
+	}
+}
+
+// ParseFull a schema from [io.Reader] and Validate.
+// but if [Schema.Rules] return nil it will skip the validation.
+//
+// Returns nil if there is no error. but return [ParseErrors] if there is
+// any kind of error exists.
+func ParseFull(reader io.Reader, to Schema) *ParseErrors {
 
 	var parseErrors *ParseErrors = nil
 
@@ -83,9 +122,50 @@ func Parse(reader io.Reader, to Schema) *ParseErrors {
 	}
 }
 
-// Parse a schema from []bytes and Validate.
+// ParseBytes a schema from []bytes and Validate.
 // but if [Schema.Rules] return nil it will skip the validation.
+//
+// ParseBytes doesn't return full list of errors, instead
+// when the first error happen it return immediately.
 func ParseBytes(data []byte, to Schema) *ParseErrors {
+
+	var parseErrors *ParseErrors = nil
+
+	err := json.Unmarshal(data, to)
+	if err != nil {
+		parseErrors = &ParseErrors{
+			ParseError: err,
+		}
+		return parseErrors
+	}
+
+	pipeSet, err := to.Rules()
+	if err != nil {
+		return &ParseErrors{
+			PreErrors: err,
+		}
+	}
+
+	if pipeSet == nil {
+		return nil
+	}
+
+	parseErr := pipeSet.Validate()
+
+	return &ParseErrors{
+		SchemaErrors: &SchemaErrors{
+			Errors: []*SchemaError{
+				parseErr,
+			},
+		},
+	}
+}
+
+// ParseBytesFull a schema from []bytes and Validate.
+// but if [Schema.Rules] return nil it will skip the validation.
+//
+// returns full list of errors.
+func ParseBytesFull(data []byte, to Schema) *ParseErrors {
 
 	var parseErrors *ParseErrors = nil
 

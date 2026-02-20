@@ -24,14 +24,14 @@ func main() {
 	schema := new(TestSchema)
 	data := []byte(`{"name": "John", "age": 30}`)
 
-	v.ParseBytes(data, schema)
+	v.ParseBytesFull(data, schema)
 }
 
 func TestParse(t *testing.T) {
 	data := []byte(`{"name": "John", "age": 30}`)
 	schema := &TestSchema{}
 
-	err := v.ParseBytes(data, schema)
+	err := v.ParseBytesFull(data, schema)
 	if err.ParseError != nil {
 		t.Errorf("ParseBytes failed: %v", err.ParseError)
 	}
@@ -50,7 +50,7 @@ func TestParseFromReader(t *testing.T) {
 	reader := bytes.NewReader(data)
 	schema := &TestSchema{}
 
-	err := v.Parse(reader, schema)
+	err := v.ParseFull(reader, schema)
 	if err.ParseError != nil {
 		t.Errorf("Parse failed: %v", err.ParseError)
 	}
@@ -68,7 +68,7 @@ func TestParseInvalidJSON(t *testing.T) {
 	data := []byte(`{invalid json}`)
 	schema := &TestSchema{}
 
-	err := v.ParseBytes(data, schema)
+	err := v.ParseBytesFull(data, schema)
 	if err.ParseError == nil {
 		t.Errorf("Expected parse error for invalid JSON")
 	}
