@@ -7,10 +7,6 @@ func (m PipeMap) ValidateAll() *SchemaErrors {
 	return m.validateAllSequential()
 }
 
-func (m PipeMap) ValidateAllParallel() *SchemaErrors {
-	return m.validateAllSequential()
-}
-
 func (m PipeMap) validateAllSequential() *SchemaErrors {
 	var errors []*SchemaError
 
