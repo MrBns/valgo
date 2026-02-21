@@ -108,15 +108,15 @@ func IsPositive(option ...ActionOptionFace) IntPipeAction {
 	}
 }
 
-// NonZero validates that an int value is equal to zero.
+// NonZero validates that an int value is not equal to zero.
 // The optional ActionOptions parameter can be used to customize the error message.
 func NonZero(option ...ActionOptionFace) IntPipeAction {
 	return &numberAction{
 		errorMsg: func(v int) string {
-			return extractMsg("value must be zero", v, option...)
+			return extractMsg("value must be non-zero", v, option...)
 		},
 		validate: func(v int) bool {
-			return v == 0
+			return v != 0
 		},
 	}
 }

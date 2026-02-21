@@ -78,11 +78,14 @@ func Parse(reader io.Reader, to Schema) *ParseErrors {
 		return nil
 	}
 
-	errors := pipeSet.Validate()
+	parseErr := pipeSet.Validate()
+	if parseErr == nil {
+		return nil
+	}
 
 	return &ParseErrors{
 		SchemaErrors: &SchemaErrors{
-			Errors: []*SchemaError{errors},
+			Errors: []*SchemaError{parseErr},
 		},
 	}
 }
@@ -116,10 +119,14 @@ func ParseFull(reader io.Reader, to Schema) *ParseErrors {
 	}
 
 	errors := pipeSet.ValidateAll()
+	if errors != nil && len(errors.Errors) > 0 {
 
-	return &ParseErrors{
-		SchemaErrors: errors,
+		return &ParseErrors{
+			SchemaErrors: errors,
+		}
 	}
+	return nil
+
 }
 
 // ParseBytes a schema from []bytes and Validate.
