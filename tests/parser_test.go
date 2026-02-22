@@ -51,7 +51,7 @@ func TestParseFromReader(t *testing.T) {
 	schema := &TestSchema{}
 
 	err := v.ParseFull(reader, schema)
-	if err.ParseError != nil {
+	if err != nil {
 		t.Errorf("Parse failed: %v", err.ParseError)
 	}
 
