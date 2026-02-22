@@ -32,8 +32,8 @@ func TestParse(t *testing.T) {
 	schema := &TestSchema{}
 
 	err := v.ParseBytesFull(data, schema)
-	if err.ParseError != nil {
-		t.Errorf("ParseBytes failed: %v", err.ParseError)
+	if err != nil {
+		t.Errorf("ParseBytes failed: %v", err)
 	}
 
 	if schema.Name != "John" {
@@ -52,7 +52,7 @@ func TestParseFromReader(t *testing.T) {
 
 	err := v.ParseFull(reader, schema)
 	if err != nil {
-		t.Errorf("Parse failed: %v", err.ParseError)
+		t.Errorf("Parse failed: %v", err)
 	}
 
 	if schema.Name != "Jane" {
@@ -69,7 +69,10 @@ func TestParseInvalidJSON(t *testing.T) {
 	schema := &TestSchema{}
 
 	err := v.ParseBytesFull(data, schema)
-	if err.ParseError == nil {
+	if err == nil {
+		t.Errorf("Expected parse error for invalid JSON")
+	}
+	if parseErr, ok := err.(*v.ParseError); !ok || parseErr.ParseError == nil {
 		t.Errorf("Expected parse error for invalid JSON")
 	}
 }

@@ -53,7 +53,11 @@ func benchmarkValidateAllIntSerial(b *testing.B, fieldCount int) {
 	for i := 0; i < b.N; i++ {
 		errs := pipeSet.ValidateAll()
 		if errs != nil {
-			b.Fatalf("expected nil errors, got %d", len(errs.Errors))
+			if validationErrs, ok := errs.(v.ValidationErrors); ok {
+				b.Fatalf("expected nil errors, got %d", len(validationErrs))
+			} else {
+				b.Fatalf("expected nil errors, got %v", errs)
+			}
 		}
 	}
 }
@@ -66,7 +70,11 @@ func benchmarkValidateAllStringSerial(b *testing.B, fieldCount int) {
 	for i := 0; i < b.N; i++ {
 		errs := pipeSet.ValidateAll()
 		if errs != nil {
-			b.Fatalf("expected nil errors, got %d", len(errs.Errors))
+			if validationErrs, ok := errs.(v.ValidationErrors); ok {
+				b.Fatalf("expected nil errors, got %d", len(validationErrs))
+			} else {
+				b.Fatalf("expected nil errors, got %v", errs)
+			}
 		}
 	}
 }

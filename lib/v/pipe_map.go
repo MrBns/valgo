@@ -3,34 +3,36 @@ package v
 // PipeMap is a map of pipe keys to pipes.
 type PipeMap map[string]PipeFace
 
-func (m PipeMap) ValidateAll() *SchemaErrors {
+func (m PipeMap) ValidateAll() error {
 	return m.validateAllSequential()
 }
 
-func (m PipeMap) validateAllSequential() *SchemaErrors {
-	var errors []*SchemaError
+func (m PipeMap) validateAllSequential() error {
+	var validationErrors ValidationErrors
 
 	for key, pipe := range m {
 		if err := pipe.Validate(); err != nil {
-			err.Key = key
-			errors = append(errors, err)
+			if fieldErr, ok := err.(*PipeError); ok {
+				validationErrors = append(validationErrors, fieldErr)
+			} else {
+				validationErrors = append(validationErrors, NewPipeError(key, err))
+			}
 		}
 	}
 
-	if len(errors) == 0 {
-		return nil
+	if len(validationErrors) > 0 {
+		return validationErrors
 	}
-
-	return &SchemaErrors{Errors: errors}
+	return nil
 }
 
-func (m PipeMap) Validate() *SchemaError {
+func (m PipeMap) Validate() error {
 	for key, pipe := range m {
 		if err := pipe.Validate(); err != nil {
-			return &SchemaError{
-				Key: key,
-				Err: err.Err,
+			if fieldErr, ok := err.(*PipeError); ok {
+				return fieldErr
 			}
+			return NewPipeError(key, err)
 		}
 	}
 	return nil

@@ -1,74 +1,123 @@
 package v
 
-import "errors"
+import (
+	"encoding/json"
+	"strings"
+)
 
-// SchemaError represents a validation error with a key and an error message.
-type SchemaError struct {
-	Key string `json:"key"`
-	Err error  `json:"msg"`
+// PipeError represents a validation error for a specific field.
+type PipeError struct {
+	Key string
+	Err error
 }
 
-// SchemaErrors is a slice of SchemaError pointers representing multiple validation errors.
-type SchemaErrors struct {
-	Errors []*SchemaError `json:"errors"`
-}
+func NewPipeError(key string, err error) *PipeError {
 
-type ParseErrors struct {
-	// Validation Errors.
-	*SchemaErrors
-	// Errors happened before validation operation.
-	PreErrors error `json:"pre_error"`
-	// Parse Error. error during json parsing.
-	ParseError error `json:"parse_error"`
-	// Errors happened after valiation operation.
-	// if validation was successful then rest of error will be here.
-	PostErrors error `json:"post_error"`
-}
-
-func (parseError *ParseErrors) Error() string {
-	if parseError == nil {
-		return ""
-	}
-	if parseError.PreErrors != nil {
-		return "v.parse_error: " + parseError.ParseError.Error()
-	} else if parseError.PostErrors != nil {
-
-		return "v.pre_error: " + parseError.ParseError.Error()
-	} else if parseError.SchemaErrors != nil && parseError.SchemaErrors.Errors != nil &&
-		len(parseError.SchemaErrors.Errors) != 0 {
-		return "v.schema_error:"
-	} else if parseError.PostErrors != nil {
-		return "v.post_error:" + parseError.PostErrors.Error()
-	} else {
-		return ""
-	}
-}
-
-// ErrorFromSchemaError extracts the error from a SchemaError.
-// It returns nil if the SchemaError pointer is nil, otherwise returns the underlying error message.
-func ErrorFromSchemaError(e *SchemaError) error {
-	if e == nil {
+	if err == nil {
 		return nil
 	}
+	return &PipeError{Key: key, Err: err}
+}
+
+func (e *PipeError) Error() string {
+	if e.Key == "" {
+		return e.Err.Error()
+	}
+	return e.Key + ": " + e.Err.Error()
+}
+
+func (e *PipeError) Unwrap() error {
 	return e.Err
 }
 
-// ErrorFromSchemaErrorList converts a SchemaErrorList into a single error by joining all errors.
-// It returns nil if the SchemaErrorList is nil. All non-nil errors from the list are combined
-// using errors.Join into a single error value. Returns the combined error or nil if the list is empty.
-func ErrorFromSchemaErrorList(e SchemaErrors) error {
-	if e.Errors == nil {
-		return nil
+// MarshalJSON ensures the underlying error string is serialized properly.
+func (e *PipeError) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]string{
+		"key": e.Key,
+		"msg": e.Err.Error(),
+	})
+}
+
+// ValidationErrors represents multiple validation errors.
+type ValidationErrors []*PipeError
+
+func (v ValidationErrors) Error() string {
+	if len(v) == 0 {
+		return ""
 	}
-
-	var err error = errors.New("")
-
-	for _, e := range e.Errors {
-
-		if e == nil {
-			continue
+	var b strings.Builder
+	for i, err := range v {
+		if i > 0 {
+			b.WriteString(", ")
 		}
-		err = errors.Join(err, e.Err)
+		b.WriteString(err.Error())
 	}
-	return err
+	return b.String()
+}
+
+// Unwrap allows standard library errors.Is and errors.As to work with the slice.
+func (v ValidationErrors) Unwrap() []error {
+	errs := make([]error, len(v))
+	for i, err := range v {
+		errs[i] = err
+	}
+	return errs
+}
+
+// ParseError wraps errors that occur during the parsing and validation lifecycle.
+type ParseError struct {
+	PreError        error `json:"-"`
+	ParseError      error `json:"-"`
+	ValidationError error `json:"-"`
+	PostError       error `json:"-"`
+}
+
+// MarshalJSON ensures the underlying errors are serialized properly.
+func (e *ParseError) MarshalJSON() ([]byte, error) {
+	m := make(map[string]any)
+	if e.PreError != nil {
+		m["pre_error"] = e.PreError.Error()
+	}
+	if e.ParseError != nil {
+		m["parse_error"] = e.ParseError.Error()
+	}
+	if e.ValidationError != nil {
+		m["validation_error"] = e.ValidationError
+	}
+	if e.PostError != nil {
+		m["post_error"] = e.PostError.Error()
+	}
+	return json.Marshal(m)
+}
+
+func (e *ParseError) Error() string {
+	if e.ParseError != nil {
+		return "v.parse_error: " + e.ParseError.Error()
+	}
+	if e.PreError != nil {
+		return "v.pre_error: " + e.PreError.Error()
+	}
+	if e.ValidationError != nil {
+		return "v.schema_error: " + e.ValidationError.Error()
+	}
+	if e.PostError != nil {
+		return "v.post_error: " + e.PostError.Error()
+	}
+	return "unknown parse error"
+}
+
+func (e *ParseError) Unwrap() error {
+	if e.ParseError != nil {
+		return e.ParseError
+	}
+	if e.PreError != nil {
+		return e.PreError
+	}
+	if e.ValidationError != nil {
+		return e.ValidationError
+	}
+	if e.PostError != nil {
+		return e.PostError
+	}
+	return nil
 }

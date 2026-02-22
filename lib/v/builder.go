@@ -18,37 +18,43 @@ func NewPipesBuilder(pipeEntries ...PipeFace) PipeSet {
 	}
 }
 
-// ValidateAll returns array of [SchemaErrors] but if there is no error then it returns nil.
+// ValidateAll returns array of [ValidationErrors] but if there is no error then it returns nil.
 //
 // it validate all the pipes. but return the first error that pipe. but pipe will be ignored if there is no error.
-func (schema *PipeRegistry) ValidateAll() *SchemaErrors {
+func (schema *PipeRegistry) ValidateAll() error {
 	return schema.validateAllSequential()
 }
 
-func (schema *PipeRegistry) ValidateAllParallel() *SchemaErrors {
+func (schema *PipeRegistry) ValidateAllParallel() error {
 	return schema.validateAllSequential()
 }
 
-func (schema *PipeRegistry) validateAllSequential() *SchemaErrors {
-	var errors []*SchemaError
+func (schema *PipeRegistry) validateAllSequential() error {
+	var validationErrors ValidationErrors
 
 	for _, pipe := range schema.pipes {
 		if err := pipe.Validate(); err != nil {
-			errors = append(errors, err)
+			if fieldErr, ok := err.(*PipeError); ok {
+				validationErrors = append(validationErrors, fieldErr)
+			} else {
+				validationErrors = append(validationErrors, NewPipeError(pipe.Key(), err))
+			}
 		}
 	}
 
-	if len(errors) == 0 {
-		return nil
+	if len(validationErrors) > 0 {
+		return validationErrors
 	}
-
-	return &SchemaErrors{Errors: errors}
+	return nil
 }
 
-func (schema *PipeRegistry) Validate() *SchemaError {
+func (schema *PipeRegistry) Validate() error {
 	for _, pipe := range schema.pipes {
 		if err := pipe.Validate(); err != nil {
-			return err
+			if fieldErr, ok := err.(*PipeError); ok {
+				return fieldErr
+			}
+			return NewPipeError(pipe.Key(), err)
 		}
 	}
 	return nil

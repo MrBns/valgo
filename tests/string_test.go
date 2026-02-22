@@ -450,9 +450,9 @@ func TestStringPipeEarlyExit(t *testing.T) {
 	if err == nil {
 		t.Errorf("should fail on first action (NotEmpty)")
 	}
-	if err != nil && err.Key != "" {
+	if fieldErr, ok := err.(*v.PipeError); ok && fieldErr.Key != "" {
 		// Key should be set if setKey was called
-		t.Logf("Error key: %s", err.Key)
+		t.Logf("Error key: %s", fieldErr.Key)
 	}
 }
 

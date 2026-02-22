@@ -40,14 +40,11 @@ func (pipe *IntPipeManager) Key() string {
 }
 
 // Validate runs all validation actions in sequence.
-// Returns a SchemaValidationError if any action fails, otherwise returns nil.
-func (pipe *IntPipeManager) Validate() *SchemaError {
+// Returns a FieldError if any action fails, otherwise returns nil.
+func (pipe *IntPipeManager) Validate() error {
 	for _, action := range pipe.actions {
 		if err := action.Run(pipe.value); err != nil {
-			return &SchemaError{
-				Key: pipe.key,
-				Err: err,
-			}
+			return NewPipeError(pipe.key, err)
 		}
 	}
 	return nil

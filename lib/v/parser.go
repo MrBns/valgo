@@ -16,35 +16,32 @@ func (s *Include) Rules() (PipeSet, error) {
 	return nil, nil
 }
 
-func Validate(s Schema) *SchemaError {
+func Validate(s Schema) error {
 	rules, err := s.Rules()
 	if err != nil {
-		return &SchemaError{
-			Key: "_pre-check",
-			Err: err,
-		}
+		return NewPipeError("_pre-check", err)
+	}
+	if rules == nil {
+		return nil
 	}
 	return rules.Validate()
 }
 
-func ValidateAll(s Schema) *SchemaErrors {
+func ValidateAll(s Schema) error {
 	rules, err := s.Rules()
 
 	if err != nil {
-		return &SchemaErrors{
-			Errors: []*SchemaError{
-				{
-					Key: "_pre-check",
-					Err: err,
-				},
-			},
-		}
+		return ValidationErrors{NewPipeError("_pre-check", err)}
+	}
+
+	if rules == nil {
+		return nil
 	}
 
 	return rules.ValidateAll()
 }
 
-func ValidateAllParallel(s Schema) *SchemaErrors {
+func ValidateAllParallel(s Schema) error {
 	return ValidateAll(s)
 }
 
@@ -53,80 +50,23 @@ func ValidateAllParallel(s Schema) *SchemaErrors {
 //
 // Parse will return only one error which occur first.
 //
-// Returns nil if there is no error. but return [ParseErrors] if there is
+// Returns nil if there is no error. but return [ParseError] if there is
 // any kind of error exists.
-func Parse(reader io.Reader, to Schema) *ParseErrors {
-
-	var parseErrors *ParseErrors = nil
-
-	err := json.NewDecoder(reader).Decode(to)
-	if err != nil {
-		parseErrors = &ParseErrors{
-			ParseError: err,
-		}
-		return parseErrors
-	}
-
-	pipeSet, err := to.Rules()
-	if err != nil {
-		return &ParseErrors{
-			PreErrors: err,
-		}
-	}
-
-	if pipeSet == nil {
-		return nil
-	}
-
-	parseErr := pipeSet.Validate()
-	if parseErr == nil {
-		return nil
-	}
-
-	return &ParseErrors{
-		SchemaErrors: &SchemaErrors{
-			Errors: []*SchemaError{parseErr},
-		},
-	}
+func Parse(reader io.Reader, to Schema) error {
+	return parseWithDecoder(func(v any) error {
+		return json.NewDecoder(reader).Decode(v)
+	}, to, false)
 }
 
 // ParseFull a schema from [io.Reader] and Validate.
 // but if [Schema.Rules] return nil it will skip the validation.
 //
-// Returns nil if there is no error. but return [ParseErrors] if there is
+// Returns nil if there is no error. but return [ParseError] if there is
 // any kind of error exists.
-func ParseFull(reader io.Reader, to Schema) *ParseErrors {
-
-	var parseErrors *ParseErrors = nil
-
-	err := json.NewDecoder(reader).Decode(to)
-	if err != nil {
-		parseErrors = &ParseErrors{
-			ParseError: err,
-		}
-		return parseErrors
-	}
-
-	pipeSet, err := to.Rules()
-	if err != nil {
-		return &ParseErrors{
-			PreErrors: err,
-		}
-	}
-
-	if pipeSet == nil {
-		return nil
-	}
-
-	errors := pipeSet.ValidateAll()
-	if errors != nil && len(errors.Errors) > 0 {
-
-		return &ParseErrors{
-			SchemaErrors: errors,
-		}
-	}
-	return nil
-
+func ParseFull(reader io.Reader, to Schema) error {
+	return parseWithDecoder(func(v any) error {
+		return json.NewDecoder(reader).Decode(v)
+	}, to, true)
 }
 
 // ParseBytes a schema from []bytes and Validate.
@@ -134,70 +74,48 @@ func ParseFull(reader io.Reader, to Schema) *ParseErrors {
 //
 // ParseBytes doesn't return full list of errors, instead
 // when the first error happen it return immediately.
-func ParseBytes(data []byte, to Schema) *ParseErrors {
-
-	var parseErrors *ParseErrors = nil
-
-	err := json.Unmarshal(data, to)
-	if err != nil {
-		parseErrors = &ParseErrors{
-			ParseError: err,
-		}
-		return parseErrors
-	}
-
-	pipeSet, err := to.Rules()
-	if err != nil {
-		return &ParseErrors{
-			PreErrors: err,
-		}
-	}
-
-	if pipeSet == nil {
-		return nil
-	}
-
-	parseErr := pipeSet.Validate()
-
-	return &ParseErrors{
-		SchemaErrors: &SchemaErrors{
-			Errors: []*SchemaError{
-				parseErr,
-			},
-		},
-	}
+func ParseBytes(data []byte, to Schema) error {
+	return parseWithDecoder(func(v any) error {
+		return json.Unmarshal(data, v)
+	}, to, false)
 }
 
 // ParseBytesFull a schema from []bytes and Validate.
 // but if [Schema.Rules] return nil it will skip the validation.
 //
 // returns full list of errors.
-func ParseBytesFull(data []byte, to Schema) *ParseErrors {
+func ParseBytesFull(data []byte, to Schema) error {
+	return parseWithDecoder(func(v any) error {
+		return json.Unmarshal(data, v)
+	}, to, true)
+}
 
-	var parseErrors *ParseErrors = nil
-
-	err := json.Unmarshal(data, to)
-	if err != nil {
-		parseErrors = &ParseErrors{
-			ParseError: err,
-		}
-		return parseErrors
+func parseWithDecoder(decode func(any) error, to Schema, full bool) error {
+	if err := decode(to); err != nil {
+		return &ParseError{ParseError: err}
 	}
 
-	pipeset, err := to.Rules()
+	pipeSet, err := to.Rules()
 	if err != nil {
-		return &ParseErrors{
-			PreErrors: err,
-		}
+		return &ParseError{PreError: err}
 	}
 
-	if pipeset == nil {
+	if pipeSet == nil {
 		return nil
 	}
 
-	parseErros := pipeset.ValidateAll()
-
-	return &ParseErrors{
-		SchemaErrors: parseErros,
+	if full {
+		schemaErrors := pipeSet.ValidateAll()
+		if schemaErrors == nil {
+			return nil
+		}
+		return &ParseError{ValidationError: schemaErrors}
 	}
+
+	schemaError := pipeSet.Validate()
+	if schemaError == nil {
+		return nil
+	}
+
+	return &ParseError{ValidationError: schemaError}
 }
