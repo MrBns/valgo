@@ -66,3 +66,61 @@ func TestParseErrorsMessagePrefix(t *testing.T) {
 		t.Fatalf("unexpected parse error format: %q", err.Error())
 	}
 }
+
+func TestErrorIsAndAs(t *testing.T) {
+	// 1. Test errors.As with ParseError
+	data := []byte(`{invalid json}`)
+	schema := &TestSchema{}
+
+	err := v.ParseBytesFull(data, schema)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	var parseErr *v.ParseError
+	if !errors.As(err, &parseErr) {
+		t.Fatalf("expected error to be of type *v.ParseError")
+	}
+	if parseErr.ParseError == nil {
+		t.Fatalf("expected ParseError field to be populated")
+	}
+
+	// 2. Test errors.As with ValidationErrors
+	data = []byte(`{"name": "", "age": 0}`) // Invalid data based on TestSchema rules
+	err = v.ParseBytesFull(data, schema)
+	if err == nil {
+		t.Fatalf("expected validation error")
+	}
+
+	if !errors.As(err, &parseErr) {
+		t.Fatalf("expected error to be of type *v.ParseError")
+	}
+
+	var validationErrs v.ValidationErrors
+	if !errors.As(parseErr.ValidationError, &validationErrs) {
+		t.Fatalf("expected ValidationError to be of type v.ValidationErrors")
+	}
+
+	if len(validationErrs) != 2 {
+		t.Fatalf("expected 2 validation errors, got %d", len(validationErrs))
+	}
+
+	// 3. Test errors.Is with specific underlying errors
+	// Let's create a specific error to test errors.Is
+	specificErr := errors.New("a very specific error")
+	pipeErr := v.NewPipeError("custom_field", specificErr)
+
+	if !errors.Is(pipeErr, specificErr) {
+		t.Fatalf("expected errors.Is to find the specific underlying error")
+	}
+
+	// Test errors.Is with ValidationErrors slice
+	errList := v.ValidationErrors{
+		v.NewPipeError("field1", errors.New("error 1")),
+		v.NewPipeError("field2", specificErr),
+	}
+
+	if !errors.Is(errList, specificErr) {
+		t.Fatalf("expected errors.Is to find the specific error inside the ValidationErrors slice")
+	}
+}
