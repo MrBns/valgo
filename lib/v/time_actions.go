@@ -197,12 +197,12 @@ func MaxDate(maxDate time.Time, option ...ActionOptionFace) TimePipeAction {
 	}
 }
 
-// Equal validates that a time.Time value equals the specified time exactly (including nanoseconds).
+// EqualTime validates that a time.Time value equals the specified time exactly (including nanoseconds).
 // The optional ActionOptions parameter can be used to customize the error message.
 //
 // Edge case consideration: This comparison includes nanosecond precision, so times parsed from
 // different sources may not be equal due to nanosecond differences.
-func Equal(t time.Time, option ...ActionOptionFace) TimePipeAction {
+func EqualTime(t time.Time, option ...ActionOptionFace) TimePipeAction {
 	return &timeAction{
 		errorMsg: func(v time.Time) string {
 			return extractMsg("time must equal "+t.String(), v, option...)

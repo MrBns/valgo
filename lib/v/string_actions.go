@@ -75,6 +75,20 @@ func Enum(slice []string, option ...ActionOptionFace) StringPipeAction {
 	}
 }
 
+// EqualString validate that cmp (compare string) string is exactly equal;
+//
+// for case-insensitive checkout [EqualFold]
+func EqualString(cmp string, option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("must be equal to "+cmp, v, option...)
+		},
+		validate: func(v string) bool {
+			return v == cmp
+		},
+	}
+}
+
 // Pattern validates that a string matches the provided regular expression pattern.
 // The regex is compiled once during validator creation for efficiency.
 // The optional ActionOptions parameter can be used to customize the error message.
