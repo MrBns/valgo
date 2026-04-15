@@ -13,7 +13,13 @@ func (m PipeMap) validateAllSequential() error {
 	for key, pipe := range m {
 		if err := pipe.Validate(); err != nil {
 			if fieldErr, ok := err.(*PipeError); ok {
+				// since in v.PipeMap value is pipe and while individual is validation time
+				// key is not accessible so it return PipeError with our key.
+				// thats why here setting key manually.
+				fieldErr.Key = key
+
 				validationErrors = append(validationErrors, fieldErr)
+
 			} else {
 				validationErrors = append(validationErrors, NewPipeError(key, err))
 			}
@@ -30,6 +36,11 @@ func (m PipeMap) Validate() error {
 	for key, pipe := range m {
 		if err := pipe.Validate(); err != nil {
 			if fieldErr, ok := err.(*PipeError); ok {
+				// since in v.PipeMap value is pipe and while individual is validation time
+				// key is not accessible so it return PipeError with our key.
+				// thats why here setting key manually.
+				fieldErr.Key = key
+
 				return fieldErr
 			}
 			return NewPipeError(key, err)
