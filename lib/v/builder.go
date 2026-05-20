@@ -111,6 +111,15 @@ func (pk *PipeEntryKeyHolder) FloatPipe(value float64, actions ...FloatPipeActio
 	}
 }
 
+// BytesPipe Creates a Bytes Pipe
+func (pk *PipeEntryKeyHolder) BytesPipe(value []byte, actions ...BytesPipeAction) PipeFace {
+	return &bytesPipeManager{
+		value:   value,
+		actions: actions,
+		error:   nil,
+	}
+}
+
 // Custom Error message
 type CustomErrMsg struct {
 	msg string

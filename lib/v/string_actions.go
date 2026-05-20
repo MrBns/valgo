@@ -732,3 +732,16 @@ func IsTimeOnly(option ...ActionOptionFace) StringPipeAction {
 		validate: is.IsTimeOnly,
 	}
 }
+
+// OneOf validates that a string is one of the provided allowed values.
+// The optional ActionOptions parameter can be used to customize the error message.
+func OneOf(values []string, option ...ActionOptionFace) StringPipeAction {
+	return &stringAction{
+		errorMsg: func(v string) string {
+			return extractMsg("value is not allowed", v, option...)
+		},
+		validate: func(v string) bool {
+			return slices.Contains(values, v)
+		},
+	}
+}
